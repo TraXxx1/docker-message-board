@@ -1,0 +1,88 @@
+services:
+  pyapi:
+    build:
+      context: ./pyapi
+      dockerfile: Dockerfile
+    command: python api.py
+    depends_on:
+      postgres:
+        condition: service_healthy
+      redis:
+        condition: service_healthy       
+    environment:
+      DB_HOST: postgres
+      DB_NAME: postgres
+      DB_USER: postgres
+      DB_PASS: mypassword
+      REDIS_HOST: redis 
+    networks:
+      - backendnet
+      - frontendnet
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:3000/messages || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  postgres:
+    image: postgres:latest
+    environment:
+      POSTGRES_DB: postgres
+      POSTGRES_USER: postgres
+      POSTGRES_PASSWORD: mypassword
+    networks:
+      - backendnet
+    volumes:
+      - db_data:/var/lib/postgresql/data
+    healthcheck:
+      test: [ "CMD-SHELL", "pg_isready -U postgres -d postgres" ]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  front-node:
+    build:
+      context: ./node-frontend
+      dockerfile: Dockerfile
+    depends_on:
+      pyapi:
+        condition: service_healthy
+    command: npm start
+    networks:
+      - frontendnet
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost:8080 || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  nxproxy:
+    image: nginx:latest
+    depends_on:
+      front-node:
+        condition: service_healthy
+    ports:
+      - "8080:80"
+    networks:
+      - frontendnet
+    volumes:
+      - ./nginx.conf:/etc/nginx/conf.d/default.conf
+    healthcheck:
+      test: ["CMD-SHELL", "curl -f http://localhost || exit 1"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+  redis:
+    image: redis:alpine
+    networks:
+      - backendnet
+    volumes:
+      - redis_data:/data
+    healthcheck:
+      test: ["CMD", "redis-cli", "ping"]
+      interval: 10s
+      timeout: 5s
+      retries: 3
+networks:
+  frontendnet:
+  backendnet:
+volumes:
+  db_data:
+  redis_data:
