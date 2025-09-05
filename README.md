@@ -1,4 +1,4 @@
-# 🐳 Docker Message Board
+#  Docker Message Board
 
 A simple **containerized message board** application built to practice **Docker and container orchestration**.  
 It demonstrates how multiple services (frontend, backend, database, cache, proxy) work together inside docker using Docker compose.
@@ -22,7 +22,7 @@ git clone https://github.com/TraXxx1/docker-message-board.git
 cd docker-message-board
 docker-compose up --build
 ```
-**Note:** You gotta have docker components and dokcer-compose installed im your machine
+**Note:** You gotta have docker components and dokcer-compose installed in your machine
 
 **Visit:** http://localhost:8080
 
